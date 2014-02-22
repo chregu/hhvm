@@ -324,6 +324,10 @@ if (NOT CCLIENT_HAS_SSL)
 	add_definitions(-DSKIP_IMAP_SSL=1)
 endif()
 
+find_library(NEWRELIC_TRANSACTION_LIBRARY NAMES newrelic-transaction PATHS /usr/lib /usr/local/lib)
+find_library(NEWRELIC_COLLECTOR_CLIENT_LIBRARY NAMES newrelic-collector-client PATHS /usr/lib /usr/local/lib)
+find_library(NEWRELIC_COMMON_LIBRARY NAMES newrelic-common PATHS /usr/lib /usr/local/lib)
+
 FIND_LIBRARY(CRYPT_LIB NAMES xcrypt crypt crypto)
 if (LINUX OR FREEBSD)
 	FIND_LIBRARY (RT_LIB rt)
@@ -382,6 +386,13 @@ macro(hphp_link target)
 		target_link_libraries(${target} ${LIBDL_LIBRARIES})
 	endif ()
 
+    target_link_libraries(${target}
+        ${NEWRELIC_TRANSACTION_LIBRARY}
+        ${NEWRELIC_COMMON_LIBRARY}
+        ${NEWRELIC_COLLECTOR_CLIENT_LIBRARY}
+
+    )
+    
 	if (GOOGLE_HEAP_PROFILER_ENABLED OR GOOGLE_CPU_PROFILER_ENABLED)
 		target_link_libraries(${target} ${GOOGLE_PROFILER_LIB})
 	endif()
