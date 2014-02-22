@@ -29,6 +29,9 @@
 #include "hphp/runtime/base/variable-serializer.h"
 #include "hphp/runtime/ext/ext_function.h"
 #include "hphp/runtime/base/request-event-handler.h"
+#include "newrelic_transaction.h"
+#include "newrelic_collector_client.h"
+#include "newrelic_common.h"
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -394,7 +397,8 @@ public:
   const char     *m_name;        // function name
   uint8_t           m_hash_code;   // hash_code for the function name
   int             m_recursion;   // recursion level for function
-
+  long              nr_id;         // newrelicprofiler segment id
+  int               nr_depth = 0;  // newrelicprofiler depth
   uint64_t          m_tsc_start;   // start value for TSC counter
   int64_t           m_mu_start;    // memory usage
   int64_t           m_pmu_start;   // peak memory usage
@@ -474,6 +478,7 @@ enum Flag {
   // Allows profiling of multiple threads at the same time with TraceProfiler.
   // Requires a lot of memory.
   IHaveInfiniteMemory   = 0x100,
+  NewRelic              = 0x800,
 };
 
 const StaticString
@@ -744,6 +749,55 @@ private:
     }
     echo("]; write_data('ut', false);</script><br><br>&nbsp;<br>");
   }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// NewRelicProfiler
+
+class NewRelicProfiler : public Profiler {
+private:
+  typedef hphp_hash_map<std::string, string_hash> StatsMap;
+  StatsMap m_stats; // outcome
+  int max_depth;
+
+public:
+
+public:
+  explicit NewRelicProfiler(int flags) : m_flags(flags) {
+	  max_depth = flags;
+//	  newrelic_transaction_begin();
+  }
+
+  virtual void beginFrameEx() {
+	  raise_warning("FOO");
+	  if (m_stack->m_parent) {
+		  Frame *p = m_stack->m_parent;
+		  m_stack->nr_depth = p->nr_depth + 1;
+	  } else {
+		  m_stack->nr_depth  = 0;
+	  }
+	  m_stack->nr_id = 0;
+	  if (m_stack->nr_depth < max_depth) {
+		  m_stack->nr_id = newrelic_segment_generic_begin(NEWRELIC_AUTOSCOPE, NEWRELIC_AUTOSCOPE, m_stack->m_name);
+	  }
+
+  }
+
+  virtual void endFrameEx() {
+    if ( m_stack->nr_id != 0) {
+		newrelic_segment_end(NEWRELIC_AUTOSCOPE, m_stack->nr_id);
+	}
+  }
+
+   virtual void writeStats(Array &ret) {
+//   newrelic_transaction_end(NEWRELIC_AUTOSCOPE);
+
+   }
+
+
+
+private:
+  uint32_t m_flags;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1571,6 +1625,7 @@ struct ProfilerFactory final : RequestEventHandler {
     Memory       = 3,
     Trace        = 4,
     Memo         = 5,
+    NewRelic     = 74,
     Sample       = 620002, // Rockfort's zip code
   };
 
@@ -1616,6 +1671,9 @@ public:
         break;
       case Memo:
         m_profiler = new MemoProfiler(flags);
+        break;
+      case NewRelic:
+        m_profiler = new NewRelicProfiler(flags);
         break;
       default:
         throw_invalid_argument("level: %d", level);
@@ -1754,6 +1812,14 @@ void f_xhprof_enable(int flags/* = 0 */,
   }
   if (flags & XhpTrace) {
     s_factory->start(ProfilerFactory::Trace, flags);
+  } else if (flags & NewRelic) {
+	  flags = 7;
+	  for (ArrayIter iter(args); iter; ++iter) {
+		  if (iter.first().toInt32() == 0) {
+		  	 flags = iter.second().toInt32();
+		  }
+	  }
+	  s_factory->start(ProfilerFactory::NewRelic, flags);
   } else {
     s_factory->start(ProfilerFactory::Hierarchical, flags);
   }
