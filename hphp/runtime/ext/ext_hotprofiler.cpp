@@ -765,11 +765,10 @@ public:
 public:
   explicit NewRelicProfiler(int flags) : m_flags(flags) {
 	  max_depth = flags;
-//	  newrelic_transaction_begin();
+	  newrelic_transaction_begin();
   }
 
   virtual void beginFrameEx() {
-	  raise_warning("FOO");
 	  if (m_stack->m_parent) {
 		  Frame *p = m_stack->m_parent;
 		  m_stack->nr_depth = p->nr_depth + 1;
@@ -789,12 +788,12 @@ public:
 	}
   }
 
-   virtual void writeStats(Array &ret) {
-//   newrelic_transaction_end(NEWRELIC_AUTOSCOPE);
-
-   }
-
-
+  virtual void endAllFrames() {
+    while (m_stack) {
+      endFrame(nullptr, true);
+    }
+    newrelic_transaction_end(NEWRELIC_AUTOSCOPE);
+  }
 
 private:
   uint32_t m_flags;
