@@ -28,6 +28,7 @@
 #include "hphp/util/cycles.h"
 #include "hphp/runtime/base/variable-serializer.h"
 #include "hphp/runtime/ext/ext_function.h"
+#include "hphp/runtime/ext/ext_options.h"
 #include "newrelic_transaction.h"
 #include "newrelic_collector_client.h"
 #include "newrelic_common.h"
@@ -747,6 +748,12 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // NewRelicProfiler
 
+const StaticString  
+  s__SERVER("_SERVER"),
+  s__REQUEST_URI("REQUEST_URI"),
+  s__SCRIPT_NAME("SCRIPT_NAME"),
+  s__NEWRELIC("newrelic");
+
 class NewRelicProfiler : public Profiler {
 private:
   typedef hphp_hash_map<std::string, string_hash> StatsMap;
@@ -757,8 +764,17 @@ public:
 
 public:
   explicit NewRelicProfiler(int flags) : m_flags(flags) {
+	  GlobalVariables *g = get_global_variables();
 	  max_depth = flags;
-	  newrelic_transaction_begin();
+	  //if extension is loaded, we already have a transaction begin
+	  // (if auto-thingie is enabled, not implemented yet)
+	  if (! f_extension_loaded(s__NEWRELIC)) {
+		  newrelic_transaction_begin();
+	  }
+	  String request_url = g->get(s__SERVER)[s__REQUEST_URI].toString();
+	  newrelic_transaction_set_request_url(NEWRELIC_AUTOSCOPE, request_url.c_str());
+	  String script_name = g->get(s__SERVER)[s__SCRIPT_NAME].toString();
+	  newrelic_transaction_set_name(NEWRELIC_AUTOSCOPE, script_name.c_str());
   }
 
   virtual void beginFrameEx() {
