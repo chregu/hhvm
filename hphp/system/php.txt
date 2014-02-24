@@ -114,3 +114,4 @@ hphp/system/php/spl/miscellaneous/ArrayObject.php
 hphp/system/php/spl/miscellaneous/autoload.php
 hphp/system/php/string/wordwrap.php
 hphp/system/php/zlib/zlib_funcs.php
+hphp/system/php/newrelic/newrelic.php
