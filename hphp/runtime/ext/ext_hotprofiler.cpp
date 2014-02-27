@@ -801,6 +801,7 @@ public:
   virtual void endFrameEx() {
     if ( m_stack->nr_id != 0) {
 		newrelic_segment_end(NEWRELIC_AUTOSCOPE, m_stack->nr_id);
+		m_stack->nr_id = 0;
 	}
   }
 
@@ -808,7 +809,6 @@ public:
     while (m_stack) {
       endFrame(nullptr, true);
     }
-    newrelic_transaction_end(NEWRELIC_AUTOSCOPE);
   }
 
 private:
