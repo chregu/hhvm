@@ -32,14 +32,17 @@ endif ()
 find_path (LIBMAGICKWAND_INCLUDE_DIRS
     NAMES
       wand/MagickWand.h
+    PATH_SUFFIXES
+      ImageMagick-6
     PATHS
       /usr/include/ImageMagick
       /usr/local/include/ImageMagick
-    ENV CPATH)
+      ENV CPATH)
 
 find_library (LIBMAGICKWAND_LIBRARIES
     NAMES
       MagickWand
+      MagickWand-6.Q16
     PATHS
       /usr/lib
       /usr/local/lib
@@ -49,6 +52,7 @@ find_library (LIBMAGICKWAND_LIBRARIES
 find_library (LIBMAGICKCORE_LIBRARIES
     NAMES
       MagickCore
+      MagickCore-6.Q16
     PATHS
       /usr/lib
       /usr/local/lib
