@@ -29,7 +29,8 @@
 #include "hphp/runtime/base/variable-serializer.h"
 #include "hphp/runtime/ext/ext_function.h"
 #include "hphp/runtime/base/request-event-handler.h"
-#include "hphp/runtime/ext/ext_options.h"
+#include "hphp/runtime/ext/extension.h"
+#include "hphp/runtime/base/php-globals.h"
 #include "newrelic_transaction.h"
 #include "newrelic_collector_client.h"
 #include "newrelic_common.h"
@@ -774,12 +775,12 @@ public:
 	  max_depth = flags;
 	  //if extension is loaded, we already have a transaction begin
 	  // (if auto-thingie is enabled, not implemented yet)
-	  if (! f_extension_loaded(s__NEWRELIC)) {
-		  GlobalVariables *g = get_global_variables();
+	  if (! Extension::IsLoaded(s__NEWRELIC)) {
+
 		  newrelic_transaction_begin();
-		  String request_url = g->get(s__SERVER).toArray()[s__REQUEST_URI].toString();
+		  String request_url = php_global(s__SERVER).toArray()[s__REQUEST_URI].toString();
 		  newrelic_transaction_set_request_url(NEWRELIC_AUTOSCOPE, request_url.c_str());
-		  String script_name = g->get(s__SERVER).toArray()[s__SCRIPT_NAME].toString();
+		  String script_name = php_global(s__SERVER).toArray()[s__SCRIPT_NAME].toString();
 		  newrelic_transaction_set_name(NEWRELIC_AUTOSCOPE, script_name.c_str());
 	  }
   }
