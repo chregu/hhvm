@@ -756,7 +756,7 @@ private:
 ///////////////////////////////////////////////////////////////////////////////
 // NewRelicProfiler
 
-const StaticString  
+const StaticString
   s__SERVER("_SERVER"),
   s__REQUEST_URI("REQUEST_URI"),
   s__SCRIPT_NAME("SCRIPT_NAME"),
@@ -772,38 +772,38 @@ public:
 
 public:
   explicit NewRelicProfiler(int flags) : m_flags(flags) {
-	  max_depth = flags;
-	  //if extension is loaded, we already have a transaction begin
-	  // (if auto-thingie is enabled, not implemented yet)
-	  if (! Extension::IsLoaded(s__NEWRELIC)) {
+      max_depth = flags;
+      //if extension is loaded, we already have a transaction begin
+      // (if auto-thingie is enabled, not implemented yet)
+      if (! Extension::IsLoaded(s__NEWRELIC)) {
 
-		  newrelic_transaction_begin();
-		  String request_url = php_global(s__SERVER).toArray()[s__REQUEST_URI].toString();
-		  newrelic_transaction_set_request_url(NEWRELIC_AUTOSCOPE, request_url.c_str());
-		  String script_name = php_global(s__SERVER).toArray()[s__SCRIPT_NAME].toString();
-		  newrelic_transaction_set_name(NEWRELIC_AUTOSCOPE, script_name.c_str());
-	  }
+          newrelic_transaction_begin();
+          String request_url = php_global(s__SERVER).toArray()[s__REQUEST_URI].toString();
+          newrelic_transaction_set_request_url(NEWRELIC_AUTOSCOPE, request_url.c_str());
+          String script_name = php_global(s__SERVER).toArray()[s__SCRIPT_NAME].toString();
+          newrelic_transaction_set_name(NEWRELIC_AUTOSCOPE, script_name.c_str());
+      }
   }
 
   virtual void beginFrameEx() {
-	  if (m_stack->m_parent) {
-		  Frame *p = m_stack->m_parent;
-		  m_stack->nr_depth = p->nr_depth + 1;
-	  } else {
-		  m_stack->nr_depth  = 0;
-	  }
-	  m_stack->nr_id = 0;
-	  if (m_stack->nr_depth < max_depth) {
-		  m_stack->nr_id = newrelic_segment_generic_begin(NEWRELIC_AUTOSCOPE, NEWRELIC_AUTOSCOPE, m_stack->m_name);
-	  }
+      if (m_stack->m_parent) {
+          Frame *p = m_stack->m_parent;
+          m_stack->nr_depth = p->nr_depth + 1;
+      } else {
+          m_stack->nr_depth  = 0;
+      }
+      m_stack->nr_id = 0;
+      if (m_stack->nr_depth < max_depth) {
+          m_stack->nr_id = newrelic_segment_generic_begin(NEWRELIC_AUTOSCOPE, NEWRELIC_AUTOSCOPE, m_stack->m_name);
+      }
 
   }
 
   virtual void endFrameEx() {
     if ( m_stack->nr_id != 0) {
-		newrelic_segment_end(NEWRELIC_AUTOSCOPE, m_stack->nr_id);
-		m_stack->nr_id = 0;
-	}
+        newrelic_segment_end(NEWRELIC_AUTOSCOPE, m_stack->nr_id);
+        m_stack->nr_id = 0;
+    }
   }
 
   virtual void endAllFrames() {
@@ -1829,13 +1829,13 @@ void f_xhprof_enable(int flags/* = 0 */,
   if (flags & XhpTrace) {
     s_factory->start(ProfilerFactory::Trace, flags);
   } else if (flags & NewRelic) {
-	  flags = 7;
-	  for (ArrayIter iter(args); iter; ++iter) {
-		  if (iter.first().toInt32() == 0) {
-		  	 flags = iter.second().toInt32();
-		  }
-	  }
-	  s_factory->start(ProfilerFactory::NewRelic, flags);
+      flags = 7;
+      for (ArrayIter iter(args); iter; ++iter) {
+          if (iter.first().toInt32() == 0) {
+               flags = iter.second().toInt32();
+          }
+      }
+      s_factory->start(ProfilerFactory::NewRelic, flags);
   } else {
     s_factory->start(ProfilerFactory::Hierarchical, flags);
   }
