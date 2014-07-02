@@ -386,6 +386,7 @@ void FastCGITransport::onHeadersComplete() {
   m_httpVersion = getRawHeader(s_httpVersion);
   m_serverObject = getRawHeader(s_scriptName);
   m_pathTranslated = getRawHeader(s_pathTranslated);
+  m_scriptFilename = getRawHeader(s_scriptFilename);
   m_documentRoot = getRawHeader(s_documentRoot);
   if (!m_documentRoot.empty() &&
       m_documentRoot[m_documentRoot.length() - 1] != '/') {
@@ -434,7 +435,7 @@ void FastCGITransport::onHeadersComplete() {
     m_pathTranslated = getRawHeader(s_scriptFilename);
   }
 
-  // do a check for mod_proxy_cgi and remove the start portion of the string
+  // do a check for mod_proxy_fcgi and remove the extra portions of the string
   const std::string modProxy = "proxy:fcgi://";
   if (m_pathTranslated.find(modProxy) == 0) {
     m_pathTranslated = m_pathTranslated.substr(modProxy.length());
@@ -442,6 +443,11 @@ void FastCGITransport::onHeadersComplete() {
     int slashPos = m_pathTranslated.find('/');
     if (slashPos != String::npos) {
       m_pathTranslated = m_pathTranslated.substr(slashPos);
+    }
+    // remove everything after the first ?
+    int questionPos = m_scriptFilename.find('?');
+    if (questionPos != String::npos) {
+      m_scriptFilename = m_scriptFilename.substr(0, questionPos);
     }
   }
 
