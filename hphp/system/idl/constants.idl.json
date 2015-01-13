@@ -5651,6 +5651,10 @@
         {
             "name": "ZEND_THREAD_SAFE",
             "value": false
+        },
+        {
+            "name": "EXTERNAL_HOTPROFILER_FIX",
+            "value": true
         }
     ],
     "funcs": [
